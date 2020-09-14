@@ -17,11 +17,11 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.bennykok.unity-mobile-dashboard",
+      "bundleIdentifier": "com.bennykok.unityclouddashboard",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.bennykok.unity-mobile-dashboard",
+      "package": "com.bennykok.unityclouddashboard",
       "versionCode": 1
     },
     "web": {
