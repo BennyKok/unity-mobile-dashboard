@@ -21,6 +21,8 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "description": "An attempt to implement a mobile dashboard for unity cloud build.",
+    "githubUrl": "https://github.com/BennyKok/unity-mobile-cloud-build-dashboard"
   }
 }
