@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "unity-mobile-cloud-build-dashboard",
+    "name": "Cloud Build Dashboard",
     "slug": "unity-mobile-cloud-build-dashboard",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -17,7 +17,12 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.bennykok.unity-mobile-dashboard",
       "supportsTablet": true
+    },
+    "android": {
+      "package": "com.bennykok.unity-mobile-dashboard",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
