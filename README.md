@@ -3,7 +3,7 @@
 An attempt to implement a mobile dashboard for unity cloud build using expo (react native!!)!
 
 ### Why?
-Once upon a time..., i just wonder if I can tigger a cloud build or get the share links without opening browser on my phone!
+I need to trigger and reivew cloud build status on the go, its much better to have a nicer user interface compared to the web based dashboard.
 
 ### Goals
 - [x] Load all projects form unity cloud
