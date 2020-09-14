@@ -21,3 +21,9 @@ here's some screenshots
 
 ### API
 Depends on the [Unity Cloud Build API](https://build-api.cloud.unity3d.com/docs/1.0.0/index.html)
+
+## Explore
+Feel free to check out some of my free assets and personal site.
+
+- [AssetStore](https://assetstore.unity.com/publishers/28510)
+- [BennyKok](https://bennykok.com)
