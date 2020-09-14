@@ -16,8 +16,8 @@ Once upon a time..., i just wonder if I can tigger a cloud build or get the shar
 ### Screenshots
 here's some screenshots
 
-![Imgur](https://i.imgur.com/qRslimp.png)
-![Imgur](https://i.imgur.com/BO3DOGt.png)
+![Imgur](https://i.imgur.com/qRslimp.png?1)
+![Imgur](https://i.imgur.com/BO3DOGt.png?1)
 
 ### API
 Depends on the [Unity Cloud Build API](https://build-api.cloud.unity3d.com/docs/1.0.0/index.html)
