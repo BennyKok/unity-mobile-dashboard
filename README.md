@@ -1,4 +1,4 @@
-# unity-mobile-cloud-build-dashboard
+# unity-mobile-dashboard
 
 An attempt to implement a mobile dashboard for unity cloud build using expo (react native!!)!
 
