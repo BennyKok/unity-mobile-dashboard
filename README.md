@@ -19,7 +19,7 @@ here's some screenshots
 ![Imgur](https://i.imgur.com/qRslimp.png?1)
 ![Imgur](https://i.imgur.com/BO3DOGt.png?1)
 
-### API
+### API Dependency
 Depends on the [Unity Cloud Build API](https://build-api.cloud.unity3d.com/docs/1.0.0/index.html)
 
 ## Explore
