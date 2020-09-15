@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Cloud Build Dashboard",
-    "slug": "unity-mobile-cloud-build-dashboard",
+    "name": "Unity Mobile Dashboard",
+    "slug": "unity-mobile-dashboard",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,17 +17,17 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.bennykok.unityclouddashboard",
+      "bundleIdentifier": "com.bennykok.unitymobiledashboard",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.bennykok.unityclouddashboard",
+      "package": "com.bennykok.unitymobiledashboard",
       "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "description": "An attempt to implement a mobile dashboard for unity cloud build.",
-    "githubUrl": "https://github.com/BennyKok/unity-mobile-cloud-build-dashboard"
+    "description": "A mobile dashboard for unity cloud build using expo (react native) !",
+    "githubUrl": "https://github.com/BennyKok/unity-mobile-dashboard"
   }
 }
