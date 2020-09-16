@@ -26,6 +26,6 @@ jobs:
       - run: npm install -g turtle-cli
       - run: expo fetch:ios:certs
       - name: Build ipa
-        run: ipa_path = "$(turtle build:ios --team-id ${{ secrets.APPLE_TEAM_ID }} --dist-p12-path unity-mobile-dashboard_dist.p12 --provisioning-profile-path unity-mobile-dashboard.mobileprovision)"
+        run: export ipa_path = "$(turtle build:ios --team-id ${{ secrets.APPLE_TEAM_ID }} --dist-p12-path unity-mobile-dashboard_dist.p12 --provisioning-profile-path unity-mobile-dashboard.mobileprovision)"
       - name: Upload to App Store Connect
-        run: xcrun altool --upload-app -f "$ipa_path" -u ${{ secrets.EXPO_APPLE_ID }} -p ${{ secrets.APP_SPECIFIC_PASSWORD }}
+        run: xcrun altool --upload-app -f "$(ipa_path)" -u ${{ secrets.EXPO_APPLE_ID }} -p ${{ secrets.APP_SPECIFIC_PASSWORD }}
