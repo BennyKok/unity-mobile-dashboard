@@ -1,11 +1,10 @@
-name: Expo Build iOS
+name: Build IPA & Upload
 on:
-  push:
-    branches:
-      - master
+  create:
+    tags:
+      - v*
 jobs:
   build:
-    name: Build iOS
     runs-on: macos-latest
     # set the env for expo build
     env:
@@ -44,7 +43,7 @@ jobs:
             ~/yarn_cache
           key: ${{ runner.os }}-cache-turtle-cli-${{ hashFiles('/tmp/turtle-version-platform') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-cache-turtle-cli-
 
       - name: Build ipa
         run: turtle build:ios --team-id ${{ secrets.APPLE_TEAM_ID }} --dist-p12-path unity-mobile-dashboard_dist.p12 --provisioning-profile-path unity-mobile-dashboard.mobileprovision -o ~/expo-project.ipa
