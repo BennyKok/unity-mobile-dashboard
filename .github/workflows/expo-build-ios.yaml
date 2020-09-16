@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     # set the env for expo build
     env:
-      EXPO_APPLE_PASSWORD: ${{ secrets.EXPO_APPLE_PASSWORD }}
+      EXPO_IOS_DIST_P12_PASSWORD: ${{ secrets.EXPO_IOS_DIST_P12_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
