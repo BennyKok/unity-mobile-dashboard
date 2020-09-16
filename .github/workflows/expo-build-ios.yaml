@@ -20,7 +20,6 @@ jobs:
           expo-version: 3.x
           expo-username: ${{ secrets.EXPO_CLI_USERNAME }}
           expo-password: ${{ secrets.EXPO_CLI_PASSWORD }}
-      - run: |
-          npm install
-          expo fetch:ios:certs
-          expo bi -t archive --no-wait --team-id ${{ secrets.APPLE_TEAM_ID }} --dist-p12-path unity-mobile-dashboard_dist.p12 --provisioning-profile-path unity-mobile-dashboard.mobileprovision
+      - run: npm install
+      - run: expo fetch:ios:certs
+      - run: expo bi -t archive --no-wait --team-id ${{ secrets.APPLE_TEAM_ID }} --dist-p12-path unity-mobile-dashboard_dist.p12 --provisioning-profile-path unity-mobile-dashboard.mobileprovision
