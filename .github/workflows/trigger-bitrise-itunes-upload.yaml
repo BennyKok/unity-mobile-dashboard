@@ -1,0 +1,12 @@
+name: Trigger Bitrise iTunes upload
+on: repository_dispatch jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    
+    - name: Trigger Bitrise
+      env:
+        webhook_url: ${{ secrets.WEBHOOK_BITRISE_DEPOLY_IOS_URL }}
+        data: ${{ secrets.WEBHOOK_BITRISE_DEPOLY_IOS_DATA }}
+      uses: distributhor/workflow-webhook@v1

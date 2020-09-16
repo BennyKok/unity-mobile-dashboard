@@ -1,0 +1,25 @@
+name: Expo Build iOS
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    name: Build iOS
+    runs-on: ubuntu-latest
+    # set the env for expo build
+    env: 
+      EXPO_APPLE_PASSWORD: ${{ secrets.EXPO_APPLE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - uses: expo/expo-github-action@v5
+        with:
+          expo-version: 3.x
+          expo-username: ${{ secrets.EXPO_CLI_USERNAME }}
+          expo-password: ${{ secrets.EXPO_CLI_PASSWORD }}
+      - run: npm install
+      # - run: expo publish
+      - run: expo bi -t archive --no-wait --apple-id ${{ secrets.EXPO_APPLE_ID }}
