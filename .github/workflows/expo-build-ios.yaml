@@ -5,6 +5,7 @@ on:
       - v*
 jobs:
   build:
+    name: iOS Build & Distribution
     runs-on: macos-latest
     # set the env for expo build
     env:
