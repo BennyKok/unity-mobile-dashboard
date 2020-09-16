@@ -8,7 +8,7 @@ jobs:
     name: Build iOS
     runs-on: ubuntu-latest
     # set the env for expo build
-    env: 
+    env:
       EXPO_APPLE_PASSWORD: ${{ secrets.EXPO_APPLE_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
