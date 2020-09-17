@@ -43,6 +43,7 @@ export async function postWithAuth<T>(
     args = {
         ...args,
         headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Basic ${apiKey}`
         }
     }

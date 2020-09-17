@@ -21,8 +21,10 @@ export function ExpandableView(props: ExpandableViewProps) {
     }}>
       <>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-
-          <Text category='s1'>{props.title}</Text>
+          <Text category='s1' style={props.children ? {} : {
+            opacity: 0.5
+          }
+          }>{props.title}</Text>
           {props.isLoading ?
             <ActivityIndicator size={25} />
             :

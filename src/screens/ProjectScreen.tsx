@@ -1,30 +1,88 @@
 import React, { useEffect, useState } from 'react';
 import { Avatar, Button, ButtonProps, Divider, Icon, Layout, List, ListItem, Text } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, ListRenderItemInfo, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, ListRenderItemInfo, RefreshControl, ScrollView, View } from 'react-native';
 import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
-import { BuildTarget, getAllBuildTargets, Project, getAllProjects } from '../CloudBuildAPI';
+import { BuildTarget, getAllBuildTargets, Project, getAllProjects, postCreateNewBuild, getBuildRecords, BuildRecord } from '../CloudBuildAPI';
 import { ExpandableView } from '../components/ExpandableView';
 import { loadApiKey } from "../utils/StoreUtils";
 
-type BuildTargetListItem = {
-    item: BuildTarget;
+type BuildTargetListItemProps = {
+    project: Project;
+    buildTarget: BuildTarget;
 };
-function BuildTargetListItem(props: BuildTargetListItem) {
-    const buildTarget = props.item;
-    const navigation = useNavigation();
+
+function BuildTargetListItem({ project, buildTarget }: BuildTargetListItemProps) {
+    const [loading, setLoading] = useState(false)
+
+    const alertBuild = (msg: string) =>
+        Alert.alert(
+            "Build Status",
+            msg,
+            [
+                { text: "OK" }
+            ],
+        );
+
     return (
         <ListItem
             style={{ backgroundColor: 'transparent' }}
             title={buildTarget.name}
             description={`${buildTarget.buildtargetid} · ${buildTarget.platform} · ${buildTarget.enabled}`}
-            accessoryRight={props => <ViewButton onPress={() => {
-                // navigation.navigate('ProjectDetails', {
-                //   project: project
-                // });
-            }}>Build</ViewButton>} />
+            accessoryRight={props =>
+                <ViewButton
+                    disabled={loading}
+                    onPress={async () => {
+                        try {
+                            setLoading(true)
+                            const key = await loadApiKey()
+                            const res = await postCreateNewBuild(key, project, buildTarget)
+                            if (res.ok && res.parsedBody && res.parsedBody.length > 0) {
+                                if (res.parsedBody[0].error)
+                                    alertBuild(res.parsedBody[0].error)
+                                else
+                                    alertBuild(res.parsedBody[0].buildStatus)
+                            } else {
+                                // console.log(JSON.stringify(res))
+                                alertBuild(JSON.stringify(res.parsedBody))
+                            }
+                        } catch (error) {
+                            console.log(error)
+                            alertBuild(error)
+                        } finally {
+                            setLoading(false)
+                        }
+                    }}>
+                    {loading ?
+                        "Loading" : "Build"
+                    }
+                </ViewButton>
+            }
+        />
     );
 }
+
+type BuildRecordListItemProps = {
+    project: Project;
+    buildRecord: BuildRecord;
+};
+
+function BuildRecordListItem({ project, buildRecord }: BuildRecordListItemProps) {
+    return (
+        <ListItem
+            style={{ backgroundColor: 'transparent' }}
+            title={`${buildRecord.build} · ${buildRecord.buildTargetName} · ${buildRecord.buildStatus}`}
+            description={`${buildRecord.platform} · ${buildRecord.buildStartTime}`}
+            accessoryRight={props =>
+                <ViewButton
+                    onPress={async () => { }}>
+                    ...
+                </ViewButton>
+            }
+        />
+    );
+}
+
 type ProjectDetailsScreenRouteProp = StackScreenProps<RootStackParamList, 'ProjectDetails'>;
 function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
     let project = props.route.params.project;
@@ -32,9 +90,40 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
     const [status, setStatus] = useState('Not Loaded');
     const [buildTargets, setBuildTargets] = useState<BuildTarget[]>([]);
 
+    const [statusRecords, setStatusRecords] = useState('Not Loaded');
+    const [buildRecords, setBuildRecords] = useState<BuildRecord[]>([]);
+
+    const fetchBuildRecords = async () => {
+        //Fetching api
+        setStatusRecords('Loading');
+
+        const apiKey = await loadApiKey();
+
+        try {
+            const res = await getBuildRecords(apiKey, project, undefined, {
+                page: 0,
+                perPage: 5,
+            })
+
+            if (res.ok) {
+                if (res.parsedBody != null) {
+                    // console.log(JSON.stringify(res.parsedBody))
+                    setBuildRecords(res.parsedBody);
+                }
+                setStatusRecords('Loaded');
+            } else {
+                let _status = res.status.toString();
+                if (res.parsedBody)
+                    _status += ' ' + JSON.stringify(res.parsedBody);
+                setStatusRecords(_status);
+            }
+        } catch (error) {
+            setStatusRecords(error);
+        }
+    }
+
     const fetchBuildTargets = async () => {
         //Fetching api
-        // return
         setStatus('Loading');
 
         const apiKey = await loadApiKey();
@@ -57,16 +146,28 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
         } catch (error) {
             setStatus(error);
         }
-
     };
 
-    useEffect(() => {
+    function isRefreshing(): boolean {
+        return status == 'Loading' || statusRecords == 'Loading'
+    }
+
+    const fetch = () => {
         fetchBuildTargets();
+        fetchBuildRecords();
+    }
+
+    useEffect(() => {
+        fetch()
     }, []);
 
     return (
         <>
-            <ScrollView>
+            <ScrollView
+                refreshControl={
+                    <RefreshControl refreshing={isRefreshing()} onRefresh={fetch} />
+                }
+            >
                 <View style={{ alignItems: 'center' }}>
                     <ProjectIconView uri={project.cachedIcon} size='large' />
                 </View>
@@ -77,20 +178,37 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
                     <Text category='c1' style={{ fontWeight: 'bold' }}>Created: </Text><Text category='s1'>{project.created + '\n'}</Text>
                 </ExpandableView>
 
-                {status == 'Loaded' && buildTargets.length == 0 ? null :
-                    <ExpandableView title='Build Targets' isLoading={status == 'Loading'}>
+                {/* {status == 'Loaded' && buildTargets.length == 0 ? null : */}
+                <ExpandableView title='Build Targets' isLoading={status == 'Loading'}>
+                    {buildTargets.length > 0 ?
+                        <>
+                            {buildTargets.slice(0, 3).map((target, index) => (
+                                <BuildTargetListItem
+                                    key={target.buildtargetid}
+                                    buildTarget={target}
+                                    project={project}
+                                />
+                            ))}
+                        </>
+                        : null}
+                </ExpandableView>
+                {/* } */}
 
-                        {buildTargets.length > 0 ?
-                            <>
-                                {buildTargets.slice(0, 3).map((target, index) => (
-                                    <BuildTargetListItem key={target.buildtargetid} item={target} />
-                                ))}
-                            </>
-                            : null}
-                    </ExpandableView>}
+                <ExpandableView title='Builds' isLoading={statusRecords == 'Loading'}>
+                    {buildTargets.length > 0 ?
+                        <>
+                            {buildRecords.slice(0, 3).map((target, index) => (
+                                <BuildRecordListItem
+                                    key={target.buildGUID}
+                                    buildRecord={target}
+                                    project={project}
+                                />
+                            ))}
+                        </>
+                        : null}
+                </ExpandableView>
 
             </ScrollView>
-
         </>
     );
 }
