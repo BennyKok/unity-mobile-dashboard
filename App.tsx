@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 
 import * as eva from '@eva-design/eva';
-import { ApplicationProvider, Avatar, BottomNavigation, BottomNavigationTab, Button, ButtonGroup, ButtonProps, Card, Divider, Icon, IconRegistry, Input, Layout, LayoutProps, List, ListItem, Text, TopNavigation } from '@ui-kitten/components';
+import { ApplicationProvider, Avatar, BottomNavigation, BottomNavigationTab, Button, ButtonGroup, ButtonProps, Card, Divider, Icon, IconProps, IconRegistry, Input, Layout, LayoutProps, List, ListItem, Text, TopNavigation } from '@ui-kitten/components';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { NavigationContainer, RouteProp, useNavigation } from '@react-navigation/native';
 import { BottomTabBarButtonProps, BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { GestureResponderEvent, ListRenderItemInfo, ScrollView, View, ViewProps } from 'react-native';
+import { ActivityIndicator, GestureResponderEvent, ListRenderItemInfo, ScrollView, View, ViewProps } from 'react-native';
 
 import { get, getWithAuth, HttpResponse, loadApiKey, postWithAuth, removeApiKey, setApiKey } from './API';
 import { ArrowIcon, CancelIcon, ConfirmIcon, HomeIcon, ProjectIcon, SettingsIcon, ViewIcon } from './Icons';
@@ -17,7 +17,7 @@ import { FadeInLayout } from './FadeInLayout';
 import { createStackNavigator, StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
 import { NavigationParams } from 'react-navigation';
 import Collapsible from 'react-native-collapsible';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 interface Project {
   name: string
@@ -74,6 +74,7 @@ async function postCreateNewBuild(apiKey: string, project: Project, target: Buil
 
 type ExpandableViewProps = LayoutProps & {
   title: string,
+  isLoading?: boolean,
   onPress?: (event: GestureResponderEvent) => void;
 }
 
@@ -81,26 +82,32 @@ function ExpandableView(props: ExpandableViewProps) {
   const [isCollapsed, setIsCollapsed] = useState(true)
   return (
     <Card onPress={(event) => {
-      setIsCollapsed(!isCollapsed)
-      if (props.onPress) props.onPress(event)
-    }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        {/* style={{ fontWeight: 'bold' }} */}
-        <Text category='s1' >{props.title}</Text>
-        <ArrowIcon style={{
-          width: 25,
-          height: 25,
-        }} />
-      </View>
-
-      {props.children ?
-        <Collapsible collapsed={isCollapsed} style={{ marginTop: 10 }}>
-          <Divider style={{ marginBottom: 10 }} />
-          {props.children}
-        </Collapsible> :
-        <></>
+      if (!props.isLoading) {
+        setIsCollapsed(!isCollapsed)
+        if (props.onPress) props.onPress(event)
       }
-
+    }}>
+      <>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* style={{ fontWeight: 'bold' }} */}
+          <Text category='s1' >{props.title}</Text>
+          {props.isLoading ?
+            <ActivityIndicator size={25} />
+            :
+            <ArrowIcon style={{
+              width: 25,
+              height: 25,
+            }} />
+          }
+        </View>
+        {props.children ?
+          <Collapsible collapsed={isCollapsed} style={{ marginTop: 10 }}>
+            <Divider style={{ marginBottom: 10 }} />
+            {props.children}
+          </Collapsible> :
+          <></>
+        }
+      </>
     </Card>
   )
 }
@@ -141,20 +148,25 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
 
     const apiKey = await loadApiKey()
 
-    const res = await getAllBuildTargets(apiKey, project)
+    try {
+      const res = await getAllBuildTargets(apiKey, project)
 
-    if (res.ok) {
-      if (res.parsedBody != null) {
-        // console.log(JSON.stringify(res.parsedBody))
-        setBuildTargets(res.parsedBody)
+      if (res.ok) {
+        if (res.parsedBody != null) {
+          // console.log(JSON.stringify(res.parsedBody))
+          setBuildTargets(res.parsedBody)
+        }
+        setStatus('Loaded')
+      } else {
+        let _status = res.status.toString()
+        if (res.parsedBody)
+          _status += ' ' + JSON.stringify(res.parsedBody);
+        setStatus(_status)
       }
-      setStatus('Loaded')
-    } else {
-      let _status = res.status.toString()
-      if (res.parsedBody)
-        _status += ' ' + JSON.stringify(res.parsedBody);
-      setStatus(_status)
+    } catch (error) {
+      setStatus(error)
     }
+
   }
 
   useEffect(() => {
@@ -174,18 +186,24 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
           <Text category='c1' style={{ fontWeight: 'bold' }}>Created: </Text><Text category='s1'>{project.created + '\n'}</Text>
         </ExpandableView>
 
-        {buildTargets && buildTargets.length > 0 ?
-          <ExpandableView title='Build Targets'>
+        {status == 'Loaded' && buildTargets.length == 0 ? null :
+          <ExpandableView title='Build Targets' isLoading={status == 'Loading'}>
             {/* <List
               scrollEnabled={false}
               data={buildTargets}
               renderItem={(_props) => <BuildTargetListItem {..._props} />}
             /> */}
-            {buildTargets.slice(0, 3).map((target, index) => (
-              <BuildTargetListItem key={target.buildtargetid} item={target} />
-            ))}
-          </ExpandableView> : <></>
+            {buildTargets.length > 0 ?
+              <>
+                {buildTargets.slice(0, 3).map((target, index) => (
+                  <BuildTargetListItem key={target.buildtargetid} item={target} />
+                ))}
+              </>
+              : null
+            }
+          </ExpandableView>
         }
+
       </ScrollView>
 
     </>
@@ -294,24 +312,24 @@ function ProjectListItem(info: ListRenderItemInfo<Project>) {
 function ProjectListScreen() {
   const [status, setStatus] = useState('Not Loaded')
   const [projects, setProjects] = useState<Project[]>([
-    {
-      name: "new-projectangrybots",
-      projectid: "new-projectangrybots",
-      orgName: "Example Org",
-      orgid: "example-org",
-      guid: "2ebef061-6213-4433-8b98-80b2e78c5189",
-      created: "2015-08-06T19:48:45.259Z",
-      cachedIcon: "https://unitycloud-build-user-svc-dev-extras-pub.s3.amazonaws.com/example-org/new-projectangrybots/default-webgl-1/icon.png",
-    },
-    {
-      name: "Example Unity",
-      projectid: "example-unity",
-      orgName: "Example Other",
-      orgid: "example-other",
-      guid: "94837118-7ee1-4583-bf11-bf33fd4643fb",
-      created: "2015-10-29T20:32:15.800Z",
-      cachedIcon: "https://unitycloud-build-user-svc-dev-extras-pub.s3.amazonaws.com/example-org/new-projectangrybots/default-webgl-1/icon.png",
-    }
+    // {
+    //   name: "new-projectangrybots",
+    //   projectid: "new-projectangrybots",
+    //   orgName: "Example Org",
+    //   orgid: "example-org",
+    //   guid: "2ebef061-6213-4433-8b98-80b2e78c5189",
+    //   created: "2015-08-06T19:48:45.259Z",
+    //   cachedIcon: "https://unitycloud-build-user-svc-dev-extras-pub.s3.amazonaws.com/example-org/new-projectangrybots/default-webgl-1/icon.png",
+    // },
+    // {
+    //   name: "Example Unity",
+    //   projectid: "example-unity",
+    //   orgName: "Example Other",
+    //   orgid: "example-other",
+    //   guid: "94837118-7ee1-4583-bf11-bf33fd4643fb",
+    //   created: "2015-10-29T20:32:15.800Z",
+    //   cachedIcon: "https://unitycloud-build-user-svc-dev-extras-pub.s3.amazonaws.com/example-org/new-projectangrybots/default-webgl-1/icon.png",
+    // }
   ])
 
   const fetchProjects = async () => {
@@ -321,66 +339,83 @@ function ProjectListScreen() {
 
     const apiKey = await loadApiKey()
 
-    const res = await getAllProjects(apiKey)
 
-    if (res.ok) {
-      if (res.parsedBody != null) {
-        // console.log(JSON.stringify(res.parsedBody))
-        setProjects(res.parsedBody)
-      }
-      setStatus('Loaded')
-    } else {
-      let _status = res.status.toString()
-      if (res.parsedBody)
-        _status += ' ' + JSON.stringify(res.parsedBody);
-      setStatus(_status)
+    if (!apiKey) {
+      setStatus('No API Key')
+      return
     }
-  }
 
+    try {
+      const res = await getAllProjects(apiKey)
+      if (res.ok) {
+        if (res.parsedBody != null) {
+          // console.log(JSON.stringify(res.parsedBody))
+          setProjects(res.parsedBody)
+        }
+        setStatus('Loaded')
+      } else {
+        let _status = res.status.toString()
+        if (res.parsedBody)
+          _status += ' ' + JSON.stringify(res.parsedBody);
+        setStatus(_status)
+      }
+    } catch (error) {
+      setStatus(error)
+    }
+
+  }
 
   useEffect(() => {
     fetchProjects()
   }, [])
 
   return (
-    <FadeInLayout>
-      <Layout style={{
-        flex: 1,
-      }}>
-        <List
-          style={{
-
-          }}
+    // <FadeInLayout>
+    <Layout style={{
+      flex: 1,
+    }}>
+      {
+        status == 'Loaded' ? <List
           data={projects}
           renderItem={(props) => <ProjectListItem {...props} />}
-        />
-        <Divider />
-        <View style={{
-          flexDirection: "row",
-          justifyContent: 'space-between',
-        }}>
-          <Text
-            style={{
-              margin: 8,
-              textAlign: 'center',
-              textAlignVertical: 'center',
-              padding: 8,
-              borderRadius: 4,
-              borderWidth: 1,
-              borderColor: 'grey'
-            }}
-            category='c1'>
-            {status}
-          </Text>
-          <Button
-            // accessoryRight={ViewIcon}
-            status='info'
-            onPress={fetchProjects}
-            appearance='ghost'
-          >Fetch Project</Button>
-        </View>
-      </Layout>
-    </FadeInLayout>
+        /> : <>{status == 'No API Key' ?
+          <View style={{
+            flex: 1
+          }} />
+          :
+          <ActivityIndicator style={{
+            flex: 1,
+            justifyContent: 'center'
+          }} size='large' />
+        }</>
+      }
+      <Divider />
+      <View style={{
+        flexDirection: "row",
+        justifyContent: 'space-between',
+      }}>
+        <Text
+          style={{
+            margin: 8,
+            textAlign: 'center',
+            textAlignVertical: 'center',
+            padding: 8,
+            borderRadius: 4,
+            borderWidth: 1,
+            borderColor: 'grey'
+          }}
+          category='c1'>
+          {status}
+        </Text>
+        <Button
+          // accessoryRight={ViewIcon}
+          status='info'
+          onPress={fetchProjects}
+          appearance='ghost'
+        >Fetch Project</Button>
+      </View>
+    </Layout>
+    // </FadeInLayout>
   );
 }
 
@@ -404,62 +439,68 @@ function SettingsScreen() {
     loadApiKey(onChangeTextApiKeySaved)
   })
 
+  const renderIcon = (props: IconProps) => (
+    <TouchableWithoutFeedback onPress={() => setApiKeyVisible(!apiKeyVisible)}>
+      <Icon {...props} name={!apiKeyVisible ? 'eye-off' : 'eye'} />
+    </TouchableWithoutFeedback>
+  );
+
   return (
-    <FadeInLayout>
-      <Layout style={{ paddingHorizontal: 10, flex: 1, alignItems: 'flex-start' }}>
-        <Text style={{ paddingTop: 8, paddingBottom: 10 }} category='label'>Cloud Build API Key</Text>
-        {/* <Text style={{ paddingBottom: 8, alignSelf: 'flex-start' }} category='c1'>
+    // <FadeInLayout>
+    <Layout style={{ paddingHorizontal: 10, flex: 1, alignItems: 'flex-start' }}>
+      <Text style={{ paddingTop: 8, paddingBottom: 10 }} category='label'>Cloud Build API Key</Text>
+      {/* <Text style={{ paddingBottom: 8, alignSelf: 'flex-start' }} category='c1'>
           {apiKeySaved ? apiKeySaved : "No Saved Key"}
         </Text> */}
 
-        {!apiKeySaved || (apiKeySaved && apiKeyVisible) ?
-          <Input
-            style={{ paddingBottom: 4 }}
-            // onSubmitEditing={setApiKey}
-            placeholder='Cloud Build API Key'
-            disabled={apiKeySaved ? true : false}
-            value={apiKeySaved ? apiKeySaved : apiKeyEditing}
-            onChangeText={nextValue => onChangeTextApiKeyEditing(nextValue)}
-          /> : <></>
-        }
+      <Input
+        style={{ paddingBottom: 4 }}
+        // onSubmitEditing={setApiKey}
+        placeholder='Cloud Build API Key'
+        disabled={apiKeySaved ? true : false}
+        secureTextEntry={!apiKeyVisible}
+        value={apiKeySaved ? apiKeySaved : apiKeyEditing}
+        onChangeText={nextValue => onChangeTextApiKeyEditing(nextValue)}
+        accessoryRight={renderIcon}
+      />
 
-        <Layout style={{ flexDirection: "row", alignSelf: "flex-end" }}>
+      <Layout style={{ flexDirection: "row", alignSelf: "flex-end" }}>
 
-          {!apiKeySaved ? <></> :
-            <Button
-              style={{ alignSelf: 'flex-end' }}
-              accessoryRight={ViewIcon}
-              status='info'
-              onPress={() => setApiKeyVisible(!apiKeyVisible)}
-              appearance='ghost'
-            >
-              {apiKeyVisible ? "Hide Key" : "View Key"}
-            </Button>
-          }
-
-          {apiKeySaved ? <Button
+        {/* {!apiKeySaved ? <></> :
+          <Button
             style={{ alignSelf: 'flex-end' }}
-            accessoryRight={CancelIcon}
-            status='danger'
-            onPress={() => removeApiKey(() => onChangeTextApiKeySaved(''))}
-            appearance='outline'
+            accessoryRight={ViewIcon}
+            status='info'
+            onPress={() => setApiKeyVisible(!apiKeyVisible)}
+            appearance='ghost'
           >
-            Remove Key
+            {apiKeyVisible ? "Hide Key" : "View Key"}
+          </Button>
+        } */}
+
+        {apiKeySaved ? <Button
+          style={{ alignSelf: 'flex-end' }}
+          accessoryRight={CancelIcon}
+          status='danger'
+          onPress={() => removeApiKey(() => onChangeTextApiKeySaved(''))}
+          appearance='outline'
+        >
+          Remove Key
           </Button> : <Button
-              style={{ alignSelf: 'flex-end' }}
-              accessoryRight={ConfirmIcon}
-              onPress={() => setApiKey(apiKeyEditing, () => {
-                onChangeTextApiKeySaved(apiKeyEditing)
-                onChangeTextApiKeyEditing('')
-                setApiKeyVisible(false)
-              })}
-            >
-              Set API Key
+            style={{ alignSelf: 'flex-end' }}
+            accessoryRight={ConfirmIcon}
+            onPress={() => setApiKey(apiKeyEditing, () => {
+              onChangeTextApiKeySaved(apiKeyEditing)
+              onChangeTextApiKeyEditing('')
+              setApiKeyVisible(false)
+            })}
+          >
+            Set API Key
         </Button>}
 
-        </Layout>
       </Layout>
-    </FadeInLayout>
+    </Layout>
+    //</FadeInLayout>
   );
 }
 
