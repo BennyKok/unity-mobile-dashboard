@@ -9,7 +9,8 @@
     "eject": "expo eject",
     "release-patch": "standard-version --release-as patch",
     "release-minor": "standard-version --release-as minor",
-    "release-major": "standard-version --release-as major"
+    "release-major": "standard-version --release-as major",
+    "emulator-android": "emulator -avd Pixel_2_API_28"
   },
   "dependencies": {
     "@eva-design/eva": "^2.0.0",
