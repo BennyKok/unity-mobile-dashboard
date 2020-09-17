@@ -1,10 +1,41 @@
-name: Build IPA & Upload
+name: CI Build & Artifacts Upload
 on:
   create:
     tags:
       - v*
 jobs:
-  build:
+  # publish on expo platform
+  expo_publish:
+    name: Expo Publish
+    runs-on: macos-latest
+  env:
+      EXPO_USERNAME: ${{ secrets.EXPO_CLI_USERNAME }}
+      EXPO_PASSWORD: ${{ secrets.EXPO_CLI_PASSWORD }}
+   steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Handle npm cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - uses: expo/expo-github-action@v5
+        with:
+          expo-version: 3.x
+          expo-username: ${{ secrets.EXPO_CLI_USERNAME }}
+          expo-password: ${{ secrets.EXPO_CLI_PASSWORD }}
+          expo-cache: true
+      - run: npm install
+      - run: expo publish
+
+  # build ipa file and upload to app store connect
+  ios_build_distribution:
     name: iOS Build & Distribution
     runs-on: macos-latest
     # set the env for expo build
@@ -31,6 +62,7 @@ jobs:
           expo-version: 3.x
           expo-username: ${{ secrets.EXPO_CLI_USERNAME }}
           expo-password: ${{ secrets.EXPO_CLI_PASSWORD }}
+          expo-cache: true
 
       - run: npm install
       - run: npm install -g turtle-cli
