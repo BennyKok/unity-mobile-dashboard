@@ -8,10 +8,10 @@ jobs:
   expo_publish:
     name: Expo Publish
     runs-on: macos-latest
-  env:
+    env:
       EXPO_USERNAME: ${{ secrets.EXPO_CLI_USERNAME }}
       EXPO_PASSWORD: ${{ secrets.EXPO_CLI_PASSWORD }}
-  steps:
+    steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
