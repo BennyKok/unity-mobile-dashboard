@@ -36,6 +36,7 @@ jobs:
 
   # build ipa file and upload to app store connect
   ios_build_distribution:
+    needs: expo_publish
     name: iOS Build & Distribution
     runs-on: macos-latest
     # set the env for expo build
