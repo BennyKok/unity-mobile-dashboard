@@ -1,8 +1,9 @@
 name: CI Build & Artifacts Upload
 on:
+  workflow_dispatch:
   create:
     tags:
-      - v*
+      - v*;
 jobs:
   # publish on expo platform
   expo_publish:
