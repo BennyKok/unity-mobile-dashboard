@@ -184,7 +184,7 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
                         <>
                             {buildTargets.slice(0, 3).map((target, index) => (
                                 <BuildTargetListItem
-                                    key={target.buildtargetid}
+                                    key={index}
                                     buildTarget={target}
                                     project={project}
                                 />
@@ -199,7 +199,7 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
                         <>
                             {buildRecords.slice(0, 3).map((target, index) => (
                                 <BuildRecordListItem
-                                    key={target.buildGUID}
+                                    key={index}
                                     buildRecord={target}
                                     project={project}
                                 />
