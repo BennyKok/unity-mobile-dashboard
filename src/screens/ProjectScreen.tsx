@@ -1,19 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, Button, ButtonProps, Divider, Icon, Layout, List, ListItem, Text } from '@ui-kitten/components';
+import { Avatar, Button, ButtonProps, Divider, Icon, Layout, List, ListItem, Spinner, Text } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, ListRenderItemInfo, RefreshControl, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, ListRenderItemInfo, RefreshControl, ScrollView, View, ViewProps } from 'react-native';
 import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
 import { BuildTarget, getAllBuildTargets, Project, getAllProjects, postCreateNewBuild, getBuildRecords, BuildRecord } from '../CloudBuildAPI';
 import { ExpandableView } from '../components/ExpandableView';
 import { loadApiKey } from "../utils/StoreUtils";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import moment from 'moment';
+import { FlatList } from 'react-native-gesture-handler';
 
 type BuildTargetListItemProps = {
-    project: Project;
-    buildTarget: BuildTarget;
+    project: Project
+    buildTarget: BuildTarget
+    onBuildCallback: () => void
 };
 
-function BuildTargetListItem({ project, buildTarget }: BuildTargetListItemProps) {
+function BuildTargetListItem({ project, buildTarget, onBuildCallback }: BuildTargetListItemProps) {
     const [loading, setLoading] = useState(false)
+    const buildIcon = getBuildIconType(buildTarget.platform)
 
     const alertBuild = (msg: string) =>
         Alert.alert(
@@ -29,6 +34,12 @@ function BuildTargetListItem({ project, buildTarget }: BuildTargetListItemProps)
             style={{ backgroundColor: 'transparent' }}
             title={buildTarget.name}
             description={`${buildTarget.buildtargetid} · ${buildTarget.platform} · ${buildTarget.enabled}`}
+            accessoryLeft={props =>
+                <MaterialCommunityIcons
+                    name={buildIcon}
+                    size={28}
+                />
+            }
             accessoryRight={props =>
                 <ViewButton
                     disabled={loading}
@@ -40,8 +51,11 @@ function BuildTargetListItem({ project, buildTarget }: BuildTargetListItemProps)
                             if (res.ok && res.parsedBody && res.parsedBody.length > 0) {
                                 if (res.parsedBody[0].error)
                                     alertBuild(res.parsedBody[0].error)
-                                else
+                                else {
                                     alertBuild(res.parsedBody[0].buildStatus)
+                                    //We probably had triggered a build
+                                    onBuildCallback()
+                                }
                             } else {
                                 // console.log(JSON.stringify(res))
                                 alertBuild(JSON.stringify(res.parsedBody))
@@ -63,20 +77,78 @@ function BuildTargetListItem({ project, buildTarget }: BuildTargetListItemProps)
 }
 
 type BuildRecordListItemProps = {
-    project: Project;
-    buildRecord: BuildRecord;
-};
+    project: Project
+    buildRecord: BuildRecord
+}
+
+function getBuildIconType(platform: string): string {
+    switch (platform) {
+        case 'ios': return 'apple-ios'
+        case 'android': return 'android'
+
+        case 'webplayer':
+        case 'webgl':
+            return 'web'
+
+        case 'standalonewindows':
+        case 'standalonewindows64':
+            return 'windows'
+
+        case 'standaloneosxintel':
+        case 'standaloneosxintel64':
+        case 'standaloneosxuniversal':
+            return 'desktop-mac'
+
+        case 'standalonelinux':
+        case 'standalonelinux64':
+        case 'standalonelinuxuniversal':
+            return 'linux'
+
+        case 'cloudrendering':
+            return 'cloud'
+
+        default: return "untiy"
+    }
+}
+
+function getBuildIconStatus(buildRecord: BuildRecord): string {
+    switch (buildRecord.buildStatus) {
+        case 'queued':
+        case 'started':
+            return 'warning'
+        case 'failure': return 'danger'
+        case 'success': return 'success'
+
+        case 'canceled':
+        case 'restarted':
+        default:
+            return "basic"
+    }
+}
 
 function BuildRecordListItem({ project, buildRecord }: BuildRecordListItemProps) {
+    const buildIcon = getBuildIconType(buildRecord.platform)
+    const startTime = buildRecord.checkoutStartTime ? moment(buildRecord.checkoutStartTime).fromNow() : ''
+    const isBuildLoading = ['queued', 'sentToBuilder', 'started', 'restarted'].includes(buildRecord.buildStatus)
+    const buildButtonStatus = getBuildIconStatus(buildRecord)
     return (
         <ListItem
             style={{ backgroundColor: 'transparent' }}
-            title={`${buildRecord.build} · ${buildRecord.buildTargetName} · ${buildRecord.buildStatus}`}
-            description={`${buildRecord.platform} · ${buildRecord.buildStartTime}`}
+            title={`${buildRecord.build} · ${buildRecord.buildTargetName}`}
+            description={`${buildRecord.buildStatus} · ${startTime}`}
+            accessoryLeft={props =>
+                <MaterialCommunityIcons
+                    name={buildIcon}
+                    size={28}
+                />
+            }
             accessoryRight={props =>
                 <ViewButton
-                    onPress={async () => { }}>
-                    ...
+                    accessoryLeft={(props) => <>{isBuildLoading ? <Spinner size='small' status={buildButtonStatus} /> : null}</>}
+                    onPress={async () => { }}
+                    status={buildButtonStatus}
+                >
+                    {buildRecord.buildStatus}
                 </ViewButton>
             }
         />
@@ -185,6 +257,7 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
                             {buildTargets.slice(0, 3).map((target, index) => (
                                 <BuildTargetListItem
                                     key={index}
+                                    onBuildCallback={fetchBuildRecords}
                                     buildTarget={target}
                                     project={project}
                                 />
@@ -327,7 +400,6 @@ function ProjectListScreen() {
 
         const apiKey = await loadApiKey();
 
-
         if (!apiKey) {
             setStatus('No API Key');
             return;
@@ -362,17 +434,19 @@ function ProjectListScreen() {
         <Layout style={{
             flex: 1,
         }}>
-            {status == 'Loaded' ? <List
-                data={projects}
-                renderItem={(props) => <ProjectListItem {...props} />} /> : <>{status == 'No API Key' ?
-                    <View style={{
-                        flex: 1
-                    }} />
-                    :
-                    <ActivityIndicator style={{
-                        flex: 1,
-                        justifyContent: 'center'
-                    }} size='large' />}</>}
+            {status == 'Loaded' ?
+                <FlatList
+                    data={projects}
+                    keyExtractor={(props) => props.guid}
+                    renderItem={(props) => <ProjectListItem {...props} />} /> : <>{status == 'No API Key' ?
+                        <View style={{
+                            flex: 1
+                        }} />
+                        :
+                        <ActivityIndicator style={{
+                            flex: 1,
+                            justifyContent: 'center'
+                        }} size='large' />}</>}
             <Divider />
             <View style={{
                 flexDirection: "row",
