@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.1.1...v1.2.0) (2020-09-19)
+
+
+### Features
+
+* 🎸 build record icons, status loading animation ([97d65c6](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/97d65c6b066be63adb0ac556eb890c707857c316))
+
+
+### Bug Fixes
+
+* 🐛 use list index for list item in projecr screen ([bc8dec0](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/bc8dec0377d14e08e57e8461d14d370384d9f97e))
+
 ### [1.1.1](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.1.0...v1.1.1) (2020-09-18)
 
 ## [1.1.0](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.0.4...v1.1.0) (2020-09-18)
