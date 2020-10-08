@@ -26,7 +26,8 @@
     },
     "android": {
       "package": "com.bennykok.unitymobiledashboard",
-      "versionCode": 380010200
+      "versionCode": 380010200,
+      "permissions": []
     },
     "web": {
       "favicon": "./assets/favicon.png"
