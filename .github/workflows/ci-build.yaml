@@ -35,6 +35,63 @@ jobs:
       - run: npm install
       - run: expo publish
 
+  android_build:
+    needs: expo_publish
+    name: Android Build & Distribution
+    runs-on: macos-latest
+    # set the env for expo build
+    env:
+      EXPO_ANDROID_KEYSTORE_ALIAS: ${{ secrets.EXPO_ANDROID_KEYSTORE_ALIAS }}
+      EXPO_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EXPO_ANDROID_KEYSTORE_PASSWORD }}
+      EXPO_ANDROID_KEY_PASSWORD: ${{ secrets.EXPO_ANDROID_KEY_PASSWORD }}
+
+      EXPO_USERNAME: ${{ secrets.EXPO_CLI_USERNAME }}
+      EXPO_PASSWORD: ${{ secrets.EXPO_CLI_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Handle npm cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - uses: expo/expo-github-action@v5
+        with:
+          expo-version: 3.x
+          expo-username: ${{ secrets.EXPO_CLI_USERNAME }}
+          expo-password: ${{ secrets.EXPO_CLI_PASSWORD }}
+          expo-cache: true
+
+      - run: npm install
+      - run: npm install -g turtle-cli
+      - run: expo fetch:android:keystore
+
+      - name: Handle turtle cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.turtle
+            ~/yarn_cache
+          key: ${{ runner.os }}-cache-turtle-cli-${{ hashFiles('/tmp/turtle-version-platform') }}
+          restore-keys: |
+            ${{ runner.os }}-cache-turtle-cli-
+
+      - name: Build aab
+        run: turtle build:android --keystore-path ./unity-mobile-dashboard.jks --type app-bundle -o ~/expo-project.aab
+      - name: Upload to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          packageName: com.bennykok.unitymobiledashboard
+          releaseFile: ./expo-project.aab
+          track: internal
+
   # build ipa file and upload to app store connect
   ios_build_distribution:
     needs: expo_publish
