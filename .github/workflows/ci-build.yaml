@@ -83,7 +83,7 @@ jobs:
             ${{ runner.os }}-cache-turtle-cli-
 
       - name: Build aab
-        run: turtle build:android --keystore-path ./unity-mobile-dashboard.jks --type app-bundle -o ~/expo-project.aab
+        run: turtle build:android --keystore-path ./unity-mobile-dashboard.jks --keystore-alias ${{ secrets.EXPO_ANDROID_KEYSTORE_ALIAS }} --type app-bundle -o ~/expo-project.aab
       - name: Upload to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
