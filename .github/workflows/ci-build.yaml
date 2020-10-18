@@ -89,7 +89,7 @@ jobs:
         with:
           serviceAccountJson: ${{ secrets.SERVICE_ACCOUNT_JSON }}
           packageName: com.bennykok.unitymobiledashboard
-          releaseFile: ./expo-project.aab
+          releaseFile: ~/expo-project.aab
           track: internal
 
   # build ipa file and upload to app store connect
