@@ -2,7 +2,7 @@
   "expo": {
     "name": "Unity Mobile Dashboard",
     "slug": "unity-mobile-dashboard",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -17,7 +17,7 @@
       "**/*"
     ],
     "ios": {
-      "buildNumber": "1.2.0",
+      "buildNumber": "1.2.1",
       "bundleIdentifier": "com.bennykok.unitymobiledashboard",
       "supportsTablet": true,
       "config": {
@@ -26,7 +26,7 @@
     },
     "android": {
       "package": "com.bennykok.unitymobiledashboard",
-      "versionCode": 380010200,
+      "versionCode": 380010201,
       "permissions": []
     },
     "web": {

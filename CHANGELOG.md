@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.2.0...v1.2.1) (2020-10-18)
+
+
+### Bug Fixes
+
+* 🐛 define empty android permissions in app.json ([f6d912b](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/f6d912b3f09b060e533739c80c6ef336fb75aead))
+* 🐛 package ([f06f81b](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/f06f81b8c530ebd2900d41b912706827864d296f))
+* 🐛 remove undefined package in package.json ([de5d479](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/de5d4794b8013f400b72cf19f6939965abe7e47e))
+
 ## [1.2.0](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.1.1...v1.2.0) (2020-09-19)
 
 
