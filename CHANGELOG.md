@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.3](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.2.2...v1.2.3) (2020-10-18)
+
+
+### Bug Fixes
+
+* 🐛 android build missing command params ([f09aa8f](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/f09aa8f93a14fcd8b170e58aa9e6dcbbbe43bd87))
+
 ### [1.2.2](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.2.1...v1.2.2) (2020-10-18)
 
 ### [1.2.1](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.2.0...v1.2.1) (2020-10-18)
