@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.2.6...v1.3.0) (2020-10-31)
+
+
+### Features
+
+* bottom sheet for build record details, button to copy download links ([31b85f2](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/31b85f271adbfab914253cf790c3664dace0352d))
+* update settings page, added github links ([cfe93d8](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/cfe93d8ac2f60783302c2d6407b32d3ca61431ef))
+
 ### [1.2.6](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.2.5...v1.2.6) (2020-10-18)
 
 ### [1.2.5](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.2.4...v1.2.5) (2020-10-18)
