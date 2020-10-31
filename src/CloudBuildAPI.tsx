@@ -24,6 +24,15 @@ export interface BuildTarget {
     enabled: boolean;
 }
 
+export interface Links {
+    download_primary: Link
+}
+
+export interface Link {
+    method: string
+    href: string
+}
+
 export interface BuildRecord {
     build: number,
     buildtargetid: string,
@@ -68,7 +77,7 @@ export interface BuildRecord {
     orgId: string,
     orgFk: string,
     filetoken: string,
-    links: object,
+    links: Links,
     buildReport: object,
     testResults: object,
     error: string,

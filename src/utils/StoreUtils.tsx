@@ -5,12 +5,14 @@ const CLOUD_BUILD_API_KEY = 'CLOUD_BUILD_API_KEY';
 export const loadApiKey = async (callback?: (value: string | null) => any): Promise<string> => {
   try {
     const credentials = await SecureStore.getItemAsync(CLOUD_BUILD_API_KEY);
+    if (callback != null)
+      callback(credentials);
     if (credentials) {
       return credentials;
     }
-    if (callback != null)
-      callback(credentials);
   } catch (e) {
+    if (callback != null)
+      callback(null);
     console.log(e);
   }
   return '';

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Card, Divider, LayoutProps, Text } from '@ui-kitten/components';
+import { Card, Divider, LayoutProps, Text, useTheme } from '@ui-kitten/components';
 import { ActivityIndicator, GestureResponderEvent, View } from 'react-native';
 import { ArrowIcon } from '../Icons';
 import Collapsible from 'react-native-collapsible';
+import { Ionicons, MaterialIcons, SimpleLineIcons } from '@expo/vector-icons';
 
 type ExpandableViewProps = LayoutProps & {
   title: string;
@@ -10,7 +11,10 @@ type ExpandableViewProps = LayoutProps & {
   onPress?: (event: GestureResponderEvent) => void;
 };
 export function ExpandableView(props: ExpandableViewProps) {
+
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const theme = useTheme();
+
   return (
     <Card onPress={(event) => {
       if (!props.isLoading) {
@@ -26,12 +30,10 @@ export function ExpandableView(props: ExpandableViewProps) {
           }
           }>{props.title}</Text>
           {props.isLoading ?
-            <ActivityIndicator size={25} />
+            <ActivityIndicator color={theme['text-basic-color']} size={25} />
             :
-            <ArrowIcon style={{
-              width: 25,
-              height: 25,
-            }} />}
+            <MaterialIcons name='keyboard-arrow-right' size={24} color={theme['text-basic-color']} />
+          }
         </View>
         {props.children ?
           <Collapsible collapsed={isCollapsed} style={{ marginTop: 10 }}>

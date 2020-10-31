@@ -27,7 +27,11 @@
     "android": {
       "package": "com.bennykok.unitymobiledashboard",
       "versionCode": 380010206,
-      "permissions": []
+      "permissions": [],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFF"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

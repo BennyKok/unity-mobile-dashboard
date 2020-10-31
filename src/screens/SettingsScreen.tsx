@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { Button, Card, Divider, Icon, IconProps, Input, Layout, Spinner, Text } from '@ui-kitten/components';
+import { Button, Card, Divider, Icon, IconProps, Input, Layout, Spinner, Text, useTheme } from '@ui-kitten/components';
 import { CancelIcon, ConfirmIcon } from '../Icons';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ScrollView, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { loadApiKey, removeApiKey, setApiKey } from "../utils/StoreUtils";
-import { Linking } from 'react-native';
+import { ActivityIndicator, Linking, View } from 'react-native';
 
 const SettingsStack = createStackNavigator();
 export function SettingsStackScreen() {
@@ -44,6 +44,8 @@ function SettingsScreen() {
     </TouchableWithoutFeedback>
   );
 
+  const theme = useTheme();
+
   return (
     // <FadeInLayout>
     <Layout style={{ height: '100%' }}>
@@ -55,11 +57,11 @@ function SettingsScreen() {
           </Card>
 
           {isLoadingAPIKey ?
-            <Layout style={{ flex: 1, justifyContent: 'space-around', flexDirection: "row", width: '100%', marginVertical: 12 }}>
-              <Spinner size='small' />
-            </Layout> :
+            <View style={{ flex: 1, justifyContent: 'center', flexDirection: "row", width: '100%', marginVertical: 12 }}>
+              <ActivityIndicator size="small" color={theme['text-basic-color']} />
+            </View> :
             <>
-              <Layout style={{ flexDirection: "row", alignSelf: "flex-end" }}>
+              <View style={{ flexDirection: "row", alignSelf: "flex-end" }}>
                 <Input
                   style={{ flex: 1, alignSelf: 'center' }}
                   // onSubmitEditing={setApiKey}
@@ -90,14 +92,14 @@ function SettingsScreen() {
                   />
                 }
 
-              </Layout>
+              </View>
             </>
           }
 
           <Card style={{ marginTop: 10 }}>
             <SettingsLabel text='About' />
             <Text category='s2'>This project is open sourced on Github, feel free to have a look there!</Text>
-            <Layout style={{ flexDirection: 'row', alignSelf: "flex-end", marginTop: 10 }}>
+            <View style={{ flexDirection: 'row', alignSelf: "flex-end", marginTop: 10 }}>
               <Button
                 status='info'
                 appearance='ghost'
@@ -107,13 +109,13 @@ function SettingsScreen() {
               >
                 Github
         </Button>
-            </Layout>
+            </View>
           </Card>
 
           <Card style={{ marginTop: 10, marginBottom: 30 }}>
             <SettingsLabel text='About Author' />
             <Text category='s2'>This project is created by BennyKok, feel free to check out his other projects as well!</Text>
-            <Layout style={{ flexDirection: 'row', alignSelf: "flex-end", marginTop: 10 }}>
+            <View style={{ flexDirection: 'row', alignSelf: "flex-end", marginTop: 10 }}>
               <Button
                 status='info'
                 appearance='ghost'
@@ -132,7 +134,7 @@ function SettingsScreen() {
               >
                 Twitter
         </Button>
-            </Layout >
+            </View >
           </Card>
         </Layout >
       </ScrollView>

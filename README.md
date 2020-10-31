@@ -11,8 +11,8 @@ It would be nice if we can trigger and reivew cloud build status on the go, its 
 ### Goals
 - [x] Load all projects form unity cloud
 - [x] Project details page
-- [ ] Implement simple build trigger function
-- [ ] Able to view build status
+- [x] Implement simple build trigger function
+- [x] Able to view build status
 - [ ] Able to cancel build
 - [ ] ...
 

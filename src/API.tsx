@@ -12,7 +12,9 @@ export async function http<T>(
 
     try {
         // may error if there is no body
-        response.parsedBody = await response.json();
+        const c = await response.json();
+        // console.log(c);
+        response.parsedBody = c;
     } catch (ex) {
         console.log(ex)
     }

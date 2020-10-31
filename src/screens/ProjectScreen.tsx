@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, Button, ButtonProps, Divider, Icon, Layout, List, ListItem, Spinner, Text } from '@ui-kitten/components';
+import { Avatar, Button, ButtonProps, Card, Divider, Icon, Layout, List, ListItem, Spinner, Text, useTheme } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, ListRenderItemInfo, RefreshControl, ScrollView, View, ViewProps } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ListRenderItemInfo, Modal, RefreshControl, ScrollView, TouchableHighlight, View, ViewProps, Clipboard } from 'react-native';
 import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
 import { BuildTarget, getAllBuildTargets, Project, getAllProjects, postCreateNewBuild, getBuildRecords, BuildRecord } from '../CloudBuildAPI';
 import { ExpandableView } from '../components/ExpandableView';
 import { loadApiKey } from "../utils/StoreUtils";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import moment from 'moment';
-import { FlatList } from 'react-native-gesture-handler';
+import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
+import BottomSheet from 'reanimated-bottom-sheet';
+
+const AnimatedView = Animated.View
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 type BuildTargetListItemProps = {
     project: Project
@@ -79,6 +84,7 @@ function BuildTargetListItem({ project, buildTarget, onBuildCallback }: BuildTar
 type BuildRecordListItemProps = {
     project: Project
     buildRecord: BuildRecord
+    onViewBuildRecord: (record: BuildRecord) => void
 }
 
 function getBuildIconType(platform: string): string {
@@ -126,11 +132,14 @@ function getBuildIconStatus(buildRecord: BuildRecord): string {
     }
 }
 
-function BuildRecordListItem({ project, buildRecord }: BuildRecordListItemProps) {
+
+function BuildRecordListItem({ project, buildRecord, onViewBuildRecord }: BuildRecordListItemProps) {
     const buildIcon = getBuildIconType(buildRecord.platform)
     const startTime = buildRecord.checkoutStartTime ? moment(buildRecord.checkoutStartTime).fromNow() : ''
     const isBuildLoading = ['queued', 'sentToBuilder', 'started', 'restarted'].includes(buildRecord.buildStatus)
     const buildButtonStatus = getBuildIconStatus(buildRecord)
+    const theme = useTheme();
+
     return (
         <ListItem
             style={{ backgroundColor: 'transparent' }}
@@ -144,8 +153,8 @@ function BuildRecordListItem({ project, buildRecord }: BuildRecordListItemProps)
             }
             accessoryRight={props =>
                 <ViewButton
-                    accessoryLeft={(props) => <>{isBuildLoading ? <Spinner size='small' status={buildButtonStatus} /> : null}</>}
-                    onPress={async () => { }}
+                    accessoryLeft={(props) => <>{isBuildLoading ? <ActivityIndicator size='small' color={theme[`text-${buildButtonStatus}-color`]} /> : null}</>}
+                    onPress={() => onViewBuildRecord(buildRecord)}
                     status={buildButtonStatus}
                 >
                     {buildRecord.buildStatus}
@@ -164,6 +173,8 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
 
     const [statusRecords, setStatusRecords] = useState('Not Loaded');
     const [buildRecords, setBuildRecords] = useState<BuildRecord[]>([]);
+
+    const [currentViewBuildRecord, setCurrentViewBuildRecord] = useState<BuildRecord | null>(null);
 
     const fetchBuildRecords = async () => {
         //Fetching api
@@ -229,12 +240,117 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
         fetchBuildRecords();
     }
 
+    const sheetRef = React.useRef<BottomSheet>(null);
+
+    const onViewBuildRecord = (record: BuildRecord) => {
+        setCurrentViewBuildRecord(record)
+
+        if (sheetRef.current != null)
+            sheetRef.current.snapTo(0)
+    }
+
+    const theme = useTheme()
+
     useEffect(() => {
         fetch()
     }, []);
 
+    let fall = new Animated.Value(1)
+
+    const renderShadow = () => {
+        const animatedShadowOpacity = Animated.interpolate(fall, {
+            inputRange: [0, 1],
+            outputRange: [0.5, 0],
+        })
+
+        return (
+            <AnimatedView
+                pointerEvents="none"
+                style={[
+                    {
+                        position: 'absolute', left: 0, right: 0, top: 0, bottom: 0,
+                        opacity: animatedShadowOpacity,
+                        backgroundColor: '#000',
+                    },
+                ]}
+            >
+            </AnimatedView>
+        )
+    }
+
+    const renderContent = () => {
+        var startTime;
+        if (currentViewBuildRecord != null)
+            startTime = currentViewBuildRecord.checkoutStartTime ? moment(currentViewBuildRecord.checkoutStartTime).fromNow() : ''
+        return (
+            currentViewBuildRecord == null ? null :
+                <View
+                    style={{
+                        backgroundColor: theme['background-basic-color-1'],
+                        padding: 16,
+                        height: 300,
+                    }}
+                >
+                    <Text category='h6'>{`${currentViewBuildRecord.build} · ${currentViewBuildRecord.buildTargetName}`}</Text>
+                    <Divider style={{ marginVertical: 8 }} />
+                    <Text category='s2'>{currentViewBuildRecord.buildStatus}</Text>
+                    <Text category='s2'>{startTime}</Text>
+                    {
+                        currentViewBuildRecord.links.download_primary != undefined ?
+                            <>
+                                {/* <Button
+                                    style={{ marginTop: 10 }}
+                                    status='info'
+                                    // appearance=''
+                                    onPress={() => {
+                                        console.log(currentViewBuildRecord.links.download_primary.href)
+                                        Linking.openURL(currentViewBuildRecord.links.download_primary.href);
+                                    }}
+                                >
+                                    Download
+                            </Button> */}
+                                <Button
+                                    style={{ marginTop: 10 }}
+                                    status='info'
+                                    onPress={() => {
+                                        Clipboard.setString(currentViewBuildRecord.links.download_primary.href);
+                                        Alert.alert(
+                                            "Link Copied",
+                                            'Download link copied to your clip board, you can paste the link in your browser to download.',
+                                            [
+                                                {
+                                                    text: "OK",
+                                                },
+                                                {
+                                                    text: "Browser", onPress: () => {
+                                                        Linking.openURL(currentViewBuildRecord.links.download_primary.href);
+                                                    }
+                                                }
+                                            ],
+                                        );
+                                    }}
+                                >
+                                    Copy To Clipboard
+                            </Button>
+                            </>
+                            : <></>
+                    }
+                </View>
+        )
+    }
+
     return (
         <>
+            <BottomSheet
+                ref={sheetRef}
+                snapPoints={[300, 0]}
+                initialSnap={1}
+                borderRadius={10}
+                callbackNode={fall}
+                renderContent={renderContent}
+                enabledContentTapInteraction={false}
+            />
+
             <ScrollView
                 refreshControl={
                     <RefreshControl refreshing={isRefreshing()} onRefresh={fetch} />
@@ -244,10 +360,10 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
                     <ProjectIconView uri={project.cachedIcon} size='large' />
                 </View>
                 <ExpandableView title='Details'>
-                    <Text category='c1' style={{ fontWeight: 'bold' }}>Id: </Text><Text category='s1'>{project.projectid + '\n'}</Text>
-                    <Text category='c1' style={{ fontWeight: 'bold' }}>Organization: </Text><Text category='s1'>{project.orgName + ' · ' + project.orgid + '\n'}</Text>
-                    <Text category='c1' style={{ fontWeight: 'bold' }}>GUID: </Text><Text category='s1'>{project.guid + '\n'}</Text>
-                    <Text category='c1' style={{ fontWeight: 'bold' }}>Created: </Text><Text category='s1'>{project.created + '\n'}</Text>
+                    <Text category='c1' style={{ fontWeight: 'bold' }}>Id: </Text><Text category='s2'>{project.projectid + '\n'}</Text>
+                    <Text category='c1' style={{ fontWeight: 'bold' }}>Organization: </Text><Text category='s2'>{project.orgName + ' · ' + project.orgid + '\n'}</Text>
+                    <Text category='c1' style={{ fontWeight: 'bold' }}>GUID: </Text><Text category='s2'>{project.guid + '\n'}</Text>
+                    <Text category='c1' style={{ fontWeight: 'bold' }}>Created: </Text><Text category='s2'>{project.created + '\n'}</Text>
                 </ExpandableView>
 
                 {/* {status == 'Loaded' && buildTargets.length == 0 ? null : */}
@@ -275,6 +391,7 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
                                     key={index}
                                     buildRecord={target}
                                     project={project}
+                                    onViewBuildRecord={onViewBuildRecord}
                                 />
                             ))}
                         </>
@@ -282,6 +399,9 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
                 </ExpandableView>
 
             </ScrollView>
+
+            {renderShadow()}
+
         </>
     );
 }
