@@ -2,14 +2,14 @@ import * as SecureStore from 'expo-secure-store';
 
 const CLOUD_BUILD_API_KEY = 'CLOUD_BUILD_API_KEY';
 
-export const loadApiKey = async (callback?: (value: string) => any): Promise<string> => {
+export const loadApiKey = async (callback?: (value: string | null) => any): Promise<string> => {
   try {
     const credentials = await SecureStore.getItemAsync(CLOUD_BUILD_API_KEY);
     if (credentials) {
-      if (callback != null)
-        callback(credentials);
       return credentials;
     }
+    if (callback != null)
+      callback(credentials);
   } catch (e) {
     console.log(e);
   }
