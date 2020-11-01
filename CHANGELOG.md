@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.3](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.3.2...v1.3.3) (2020-11-01)
+
+
+### Bug Fixes
+
+* resize adaptive icon correctly ([5cc09d0](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/commit/5cc09d0aae6661bd26ac017f18ca823dc3783e4c))
+
 ### [1.3.2](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.3.1...v1.3.2) (2020-11-01)
 
 ### [1.3.1](https://github.com/BennyKok/unity-mobile-cloud-build-dashboard/compare/v1.3.0...v1.3.1) (2020-11-01)
