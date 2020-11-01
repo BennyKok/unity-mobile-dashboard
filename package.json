@@ -38,7 +38,8 @@
     "react-native-vector-icons": "^7.1.0",
     "react-native-web": "~0.13.7",
     "react-navigation": "^4.1.1",
-    "reanimated-bottom-sheet": "^1.0.0-alpha.22"
+    "reanimated-bottom-sheet": "^1.0.0-alpha.22",
+    "expo-screen-orientation": "~2.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",
