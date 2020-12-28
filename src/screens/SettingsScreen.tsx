@@ -3,7 +3,7 @@ import { Button, Card, Divider, Icon, IconProps, Input, Layout, Spinner, Text, u
 import { CancelIcon, ConfirmIcon } from '../Icons';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ScrollView, TouchableWithoutFeedback } from 'react-native-gesture-handler';
-import { loadApiKey, removeApiKey, setApiKey } from "../utils/StoreUtils";
+import StoreUtils from "../utils/StoreUtils";
 import { ActivityIndicator, Linking, View } from 'react-native';
 
 const SettingsStack = createStackNavigator();
@@ -31,7 +31,7 @@ function SettingsScreen() {
   const [isLoadingAPIKey, setLoadingAPIKey] = React.useState(true);
 
   useEffect(() => {
-    loadApiKey((val) => {
+    StoreUtils.loadApiKey((val) => {
       if (val != null)
         onChangeTextApiKeySaved(val)
       setLoadingAPIKey(false)
@@ -48,7 +48,7 @@ function SettingsScreen() {
 
   return (
     // <FadeInLayout>
-    <Layout style={{ height: '100%' }}>
+    <Layout style={{ height: '100%', width: '100%' }}>
       <ScrollView >
         <Layout style={{ paddingHorizontal: 10, flex: 1, alignItems: 'flex-start' }}>
           <Card style={{ marginTop: 10 }}>
@@ -76,7 +76,7 @@ function SettingsScreen() {
                   style={{ height: 20, width: 20 }}
                   accessoryRight={CancelIcon}
                   status='danger'
-                  onPress={() => removeApiKey(() => onChangeTextApiKeySaved(''))}
+                  onPress={() => StoreUtils.removeApiKey(() => onChangeTextApiKeySaved(''))}
                   appearance='outline'
                 />
 
@@ -84,7 +84,7 @@ function SettingsScreen() {
                     appearance='outline'
                     style={{ height: 20, width: 20 }}
                     accessoryRight={ConfirmIcon}
-                    onPress={() => setApiKey(apiKeyEditing, () => {
+                    onPress={() => StoreUtils.setApiKey(apiKeyEditing, () => {
                       onChangeTextApiKeySaved(apiKeyEditing);
                       onChangeTextApiKeyEditing('');
                       setApiKeyVisible(false);

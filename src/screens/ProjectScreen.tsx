@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Avatar, Button, ButtonProps, Card, Divider, Icon, Layout, List, ListItem, Spinner, Text, useTheme } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Linking, ListRenderItemInfo, Modal, RefreshControl, ScrollView, TouchableHighlight, View, ViewProps, Clipboard } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ListRenderItemInfo, Modal, RefreshControl, ScrollView, TouchableHighlight, View, ViewProps, Clipboard, SectionList } from 'react-native';
 import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
 import { BuildTarget, getAllBuildTargets, Project, getAllProjects, postCreateNewBuild, getBuildRecords, BuildRecord } from '../CloudBuildAPI';
 import { ExpandableView } from '../components/ExpandableView';
-import { loadApiKey } from "../utils/StoreUtils";
+import StoreUtils from "../utils/StoreUtils";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import moment from 'moment';
 import { FlatList, TouchableOpacity } from 'react-native-gesture-handler';
@@ -51,7 +51,7 @@ function BuildTargetListItem({ project, buildTarget, onBuildCallback }: BuildTar
                     onPress={async () => {
                         try {
                             setLoading(true)
-                            const key = await loadApiKey()
+                            const key = await StoreUtils.loadApiKey()
                             const res = await postCreateNewBuild(key, project, buildTarget)
                             if (res.ok && res.parsedBody && res.parsedBody.length > 0) {
                                 if (res.parsedBody[0].error)
@@ -98,7 +98,7 @@ function getBuildIconType(platform: string): string {
 
         case 'standalonewindows':
         case 'standalonewindows64':
-            return 'windows'
+            return 'microsoft-windows'
 
         case 'standaloneosxintel':
         case 'standaloneosxintel64':
@@ -180,7 +180,7 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
         //Fetching api
         setStatusRecords('Loading');
 
-        const apiKey = await loadApiKey();
+        const apiKey = await StoreUtils.loadApiKey();
 
         try {
             const res = await getBuildRecords(apiKey, project, undefined, {
@@ -209,7 +209,7 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
         //Fetching api
         setStatus('Loading');
 
-        const apiKey = await loadApiKey();
+        const apiKey = await StoreUtils.loadApiKey();
 
         try {
             const res = await getAllBuildTargets(apiKey, project);
@@ -475,23 +475,56 @@ function ViewButton(props: ButtonProps) {
         </Button>
     );
 }
-function ProjectListItem(info: ListRenderItemInfo<Project>) {
-    const project = info.item;
+
+type ProjectListItemProps = {
+    info: Project
+    updatePinnedProjects: (pins: string[]) => void
+    pins: string[]
+};
+
+type ListData = {
+    title: string
+    data: Project[]
+}
+
+function ProjectListItem(listProps: ProjectListItemProps) {
+    const project = listProps.info;
+    const [pinned, setPinned] = useState(listProps.pins.includes(project.guid))
     const navigation = useNavigation();
+
     return (
         <ListItem
-            title={project.name}
-            description={`${project.projectid} · ${project.orgName}`}
-            accessoryRight={props => <ViewButton onPress={() => {
+            onPress={() => {
                 navigation.navigate('ProjectDetails', {
                     project: project
                 });
-            }}>View</ViewButton>}
-            accessoryLeft={props => (<ProjectIconView uri={project.cachedIcon} />)} />
+            }}
+            title={project.name}
+            description={`${project.projectid} · ${project.orgName}`}
+            accessoryRight={props =>
+                <ViewButton onPress={async () => {
+                    let mpins = listProps.pins
+                    if (pinned)
+                        mpins = mpins.filter(x => x !== project.guid);
+                    else {
+                        mpins.push(project.guid)
+                        mpins = [...mpins]
+                    }
+                    listProps.updatePinnedProjects(mpins)
+                    StoreUtils.storePinnedProject(mpins)
+                    setPinned(!pinned)
+                }}>{pinned ? "Unpin" : "Pin"}</ViewButton>
+            }
+            accessoryLeft={props => (
+                <ProjectIconView uri={project.cachedIcon} />
+            )}
+        />
     );
 }
+
 function ProjectListScreen() {
     const [status, setStatus] = useState('Not Loaded');
+    const [pins, setPins] = useState<string[]>([])
     const [projects, setProjects] = useState<Project[]>([
         // {
         //   name: "new-projectangrybots",
@@ -512,13 +545,16 @@ function ProjectListScreen() {
         //   cachedIcon: "https://unitycloud-build-user-svc-dev-extras-pub.s3.amazonaws.com/example-org/new-projectangrybots/default-webgl-1/icon.png",
         // }
     ]);
+    const [listData, setListData] = useState<ListData[]>([])
 
     const fetchProjects = async () => {
         //Fetching api
         // return
+        console.log("fet");
+
         setStatus('Loading');
 
-        const apiKey = await loadApiKey();
+        const apiKey = await StoreUtils.loadApiKey();
 
         if (!apiKey) {
             setStatus('No API Key');
@@ -530,7 +566,20 @@ function ProjectListScreen() {
             if (res.ok) {
                 if (res.parsedBody != null) {
                     // console.log(JSON.stringify(res.parsedBody))
-                    setProjects(res.parsedBody);
+                    let pins = await StoreUtils.getPinnedProject()
+                    setPins(pins)
+                    const p = sortProject(pins, res.parsedBody);
+                    setProjects(p)
+                    setListData([
+                        {
+                            title: 'Pinned',
+                            data: p.filter(x => pins.includes(x.guid))
+                        },
+                        {
+                            title: 'All Projects',
+                            data: p.filter(x => !pins.includes(x.guid))
+                        }
+                    ])
                 }
                 setStatus('Loaded');
             } else {
@@ -542,57 +591,74 @@ function ProjectListScreen() {
         } catch (error) {
             setStatus(error);
         }
-
     };
 
     useEffect(() => {
         fetchProjects();
     }, []);
 
+    const sortProject = (pins: string[], pro: Project[]): Project[] => {
+        let pro2 = [...pro]
+        pro2.sort((x, y) => {
+            // let xPin = pins.includes(x.guid);
+            // let yPin = pins.includes(y.guid);
+            // if (xPin) return -1;
+            // if (yPin) return 1;
+            return y.created.localeCompare(x.created);
+        })
+        return pro2
+    }
+
+    const updatePinnedProjects = (pins: string[]) => {
+        setPins(pins)
+        setListData([
+            {
+                title: 'Pinned',
+                data: projects.filter(x => pins.includes(x.guid))
+            },
+            {
+                title: 'All Projects',
+                data: projects.filter(x => !pins.includes(x.guid))
+            }
+        ])
+    }
+
+    const theme = useTheme();
+
     return (
-        // <FadeInLayout>
         <Layout style={{
             flex: 1,
         }}>
             {status == 'Loaded' ?
-                <FlatList
-                    data={projects}
-                    keyExtractor={(props) => props.guid}
-                    renderItem={(props) => <ProjectListItem {...props} />} /> : <>{status == 'No API Key' ?
+                <SectionList
+                    keyExtractor={(item, index) => item.guid + index}
+                    sections={listData}
+                    renderSectionHeader={({ section: { title } }) => (
+                        <ListItem title={title} />
+                    )}
+                    renderItem={({ item }) =>
+                        <ProjectListItem
+                            updatePinnedProjects={updatePinnedProjects}
+                            info={item}
+                            pins={pins}
+                        />}
+                />
+                :
+                <>
+                    {status == 'No API Key' ?
                         <View style={{
                             flex: 1
                         }} />
                         :
-                        <ActivityIndicator style={{
-                            flex: 1,
-                            justifyContent: 'center'
-                        }} size='large' />}</>}
-            <Divider />
-            <View style={{
-                flexDirection: "row",
-                justifyContent: 'space-between',
-            }}>
-                <Text
-                    style={{
-                        margin: 8,
-                        textAlign: 'center',
-                        textAlignVertical: 'center',
-                        padding: 8,
-                        borderRadius: 4,
-                        borderWidth: 1,
-                        borderColor: 'grey'
-                    }}
-                    category='c1'>
-                    {status}
-                </Text>
-                <Button
-                    // accessoryRight={ViewIcon}
-                    status='info'
-                    onPress={fetchProjects}
-                    appearance='ghost'
-                >Fetch Project</Button>
-            </View>
+                        <ActivityIndicator
+                            color={theme['text-basic-color']}
+                            style={{
+                                flex: 1,
+                                justifyContent: 'center'
+                            }} size='large' />
+                    }
+                </>
+            }
         </Layout>
-        // </FadeInLayout>
     );
 }
