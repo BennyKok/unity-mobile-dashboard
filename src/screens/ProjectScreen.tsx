@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar, Button, ButtonProps, Card, Divider, Icon, Layout, List, ListItem, Spinner, Text, useTheme } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Linking, ListRenderItemInfo, Modal, RefreshControl, ScrollView, TouchableHighlight, View, ViewProps, Clipboard, SectionList } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ListRenderItemInfo, Modal, RefreshControl, ScrollView, TouchableHighlight, View, ViewProps, Clipboard, SectionList, SectionListData } from 'react-native';
 import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
 import { BuildTarget, getAllBuildTargets, Project, getAllProjects, postCreateNewBuild, getBuildRecords, BuildRecord } from '../CloudBuildAPI';
 import { ExpandableView } from '../components/ExpandableView';
@@ -235,7 +235,7 @@ function ProjectDetailsScreen(props: ProjectDetailsScreenRouteProp) {
         return status == 'Loading' || statusRecords == 'Loading'
     }
 
-    const fetch = () => {
+    const fetch = async () => {
         fetchBuildTargets();
         fetchBuildRecords();
     }
@@ -545,13 +545,20 @@ function ProjectListScreen() {
         //   cachedIcon: "https://unitycloud-build-user-svc-dev-extras-pub.s3.amazonaws.com/example-org/new-projectangrybots/default-webgl-1/icon.png",
         // }
     ]);
-    const [listData, setListData] = useState<ListData[]>([])
+    const listData = useMemo(() => [
+        {
+            title: 'Pinned',
+            data: projects.filter(x => pins.includes(x.guid))
+        },
+        {
+            title: 'All Projects',
+            data: projects.filter(x => !pins.includes(x.guid))
+        }
+    ], [projects, pins])
 
     const fetchProjects = async () => {
         //Fetching api
         // return
-        console.log("fet");
-
         setStatus('Loading');
 
         const apiKey = await StoreUtils.loadApiKey();
@@ -570,16 +577,6 @@ function ProjectListScreen() {
                     setPins(pins)
                     const p = sortProject(pins, res.parsedBody);
                     setProjects(p)
-                    setListData([
-                        {
-                            title: 'Pinned',
-                            data: p.filter(x => pins.includes(x.guid))
-                        },
-                        {
-                            title: 'All Projects',
-                            data: p.filter(x => !pins.includes(x.guid))
-                        }
-                    ])
                 }
                 setStatus('Loaded');
             } else {
@@ -611,19 +608,25 @@ function ProjectListScreen() {
 
     const updatePinnedProjects = (pins: string[]) => {
         setPins(pins)
-        setListData([
-            {
-                title: 'Pinned',
-                data: projects.filter(x => pins.includes(x.guid))
-            },
-            {
-                title: 'All Projects',
-                data: projects.filter(x => !pins.includes(x.guid))
-            }
-        ])
     }
 
+    const count = useRef(0)
+    count.current++
+    console.log(count.current);
+
     const theme = useTheme();
+
+    const renderItem = (list: ListRenderItemInfo<Project>) => (
+        <ProjectListItem
+            updatePinnedProjects={updatePinnedProjects}
+            info={list.item}
+            pins={pins}
+        />
+    )
+
+    const renderHeader = (info: { section: SectionListData<Project, { title: string }> }) => (
+        <ListItem title={info.section.title} />
+    )
 
     return (
         <Layout style={{
@@ -633,15 +636,8 @@ function ProjectListScreen() {
                 <SectionList
                     keyExtractor={(item, index) => item.guid + index}
                     sections={listData}
-                    renderSectionHeader={({ section: { title } }) => (
-                        <ListItem title={title} />
-                    )}
-                    renderItem={({ item }) =>
-                        <ProjectListItem
-                            updatePinnedProjects={updatePinnedProjects}
-                            info={item}
-                            pins={pins}
-                        />}
+                    renderSectionHeader={renderHeader}
+                    renderItem={renderItem}
                 />
                 :
                 <>
